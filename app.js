@@ -3,6 +3,8 @@ const bodyParser = require('body-parser');
 const exphbs = require('express-handlebars');
 const path = require('path');
 const nodemailer = require('nodemailer');
+const sendgridTransport = require('nodemailer-sendgrid-transport')
+const {SENDGRID_API} = require('./config/keys')
 
 const app = express();
 
@@ -36,25 +38,17 @@ app.post('/send', (req, res) => {
     <h3>Message</h3>
     <p>${req.body.message}</p>
   `;
-
-  // create reusable transporter object using the default SMTP transport
-  let transporter = nodemailer.createTransport({
-    host: 'smtp.ethereal.email',
-    port: 587,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: 'pablo.hahn55@ethereal.email',
-      pass: 'UyrWHR28HDmXR7krVr' // generated ethereal password
-    },
-    tls:{
-      rejectUnauthorized:false
+   
+  const transporter = nodemailer.createTransport(sendgridTransport({
+    auth:{
+        api_key:SENDGRID_API
     }
-  });
+}))
 
   // setup email data with unicode symbols
   let mailOptions = {
-      from: '"Nodemailer Contact" <imsubhranasaastronaut@gmail.com>', // sender address
-      to: 'subhrasankhasarma1999@gmail.com', // list of receivers
+      from: '<subhrasankhasarma1999@gmail.com>', // sender address
+      to: req.body.email, // list of receivers
       subject: 'Node Contact Request', // Subject line
       text: 'Hello world?', // plain text body
       html: output // html body
@@ -66,8 +60,6 @@ app.post('/send', (req, res) => {
           return console.log(error);
       }
       console.log('Message sent: %s', info.messageId);   
-      console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
-
       res.render('contact', {msg:'Email has been sent'});
   });
   });
